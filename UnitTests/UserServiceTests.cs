@@ -17,7 +17,7 @@ namespace JwtPracticeProject
 
 
         // init user set
-        private readonly Mock<DbSet<User>> _mockUserSet;
+    
 
         // init db interaction
         private readonly ApplicationDbContext _context;
@@ -82,7 +82,7 @@ namespace JwtPracticeProject
             var username = "fahrenheit";
             var hashedPassword = "123";
             var role = "fireman";
-            var expectedUser = new User { Id = 451, Username = username, HashedPassword = hashedPassword, Role = role };
+            var expectedUser = new User { Id = userId, Username = username, HashedPassword = hashedPassword, Role = role };
             _context.Users.Add(expectedUser);
             await _context.SaveChangesAsync();
 
@@ -111,7 +111,7 @@ namespace JwtPracticeProject
         public async Task CreateUserAsync_UserCreated_ReturnUser()
         {
 
- 
+
             // arrange
             var username = "fahrenheit";
             var plainPassword = "123";
@@ -123,6 +123,49 @@ namespace JwtPracticeProject
             Assert.True(BCrypt.Net.BCrypt.Verify(plainPassword, newUser.HashedPassword)); // Verify the hashed password matches
         }
 
+        // check if a jwt token is returned
+        // 
+
+        // public async Task<string?> Authenticate(string username, string password)
+        // {
+        //     // Find the user by username
+        //     var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == username);
+
+
+        //     if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.HashedPassword))
+        //     {
+        //         return null;
+        //     }
+
+        //     string generatedToken = GenerateJwtToken(user);
+        //     return generatedToken;
+        // }
+        [Fact]
+        public async Task Login_Returns_JwtToken()
+        {
+
+            // arrange
+            var userId = 451;
+            var username = "fahrenheit";
+            var hashedPassword = "123";
+            var role = "fireman";
+            var newUser = new User { Id = userId, Username = username, HashedPassword = hashedPassword, Role = role };
+            _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
+
+            // act: this will fill login with a JWT token value            
+            var login = await _userService.Authenticate(newUser.Username, newUser.HashedPassword);
+
+            // assert
+            Assert.NotNull(login); 
+            Assert.Equal(2, login.Split('.').Length - 1); // JWT should have exactly two dots
+
+
+
+        }
+
+
+        // check if jwt token returns 200 OK
         public void Dispose()
         {
             _context.Database.RollbackTransaction();
